@@ -1,0 +1,12 @@
+{
+    "id": "stepstone_sync",
+    "name": "Stepstone Sync",
+    "description": "Module for syncing StepStone data.",
+    "keywords": [
+    ],
+    "version": "1.0.1",
+    "humhub": {
+        "minVersion": "1.2"
+    },
+    "screenshots": ["resources/screen1.jpg"]
+}
