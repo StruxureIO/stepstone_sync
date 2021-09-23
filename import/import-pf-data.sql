@@ -1,5 +1,7 @@
---  add directory_filter table
-ALTER TABLE `profile_field` ADD `directory_filter` TINYINT NOT NULL DEFAULT '0' AFTER `searchable`; 
+-- add records for tabs to the profile_field_category
+INSERT INTO `profile_field_category` (`id`, `title`, `description`, `sort_order`, `module_id`, `visibility`, `created_at`, `created_by`, `updated_at`, `updated_by`, `translation_category`, `is_system`) VALUES
+(4, 'StepStone', '', 1, NULL, 1, '2021-09-06 18:43:55', 1, '2021-09-06 19:58:28', 1, 'UserModule.profile', NULL),
+(5, 'StepStone - Locked', '', 400, NULL, 1, '2021-09-06 20:32:45', 1, '2021-09-06 20:34:41', 1, 'UserModule.profile', NULL);
 
 -- add data to profile_field table
 INSERT INTO `profile_field` (`id`, `profile_field_category_id`, `module_id`, `field_type_class`, `field_type_config`, `internal_name`, `title`, `description`, `sort_order`, `required`, `show_at_registration`, `editable`, `visible`, `created_at`, `created_by`, `updated_at`, `updated_by`, `ldap_attribute`, `translation_category`, `is_system`, `searchable`, `directory_filter`) VALUES
@@ -31,8 +33,4 @@ INSERT INTO `profile_field` (`id`, `profile_field_category_id`, `module_id`, `fi
 -- --------------------------------------------------------
 
 
--- add records for tabs to the profile_field_category
-INSERT INTO `profile_field_category` (`id`, `title`, `description`, `sort_order`, `module_id`, `visibility`, `created_at`, `created_by`, `updated_at`, `updated_by`, `translation_category`, `is_system`) VALUES
-(4, 'StepStone', '', 1, NULL, 1, '2021-09-06 18:43:55', 1, '2021-09-06 19:58:28', 1, 'UserModule.profile', NULL),
-(5, 'StepStone - Locked', '', 400, NULL, 1, '2021-09-06 20:32:45', 1, '2021-09-06 20:34:41', 1, 'UserModule.profile', NULL);
 

@@ -31,6 +31,8 @@ class AdminController extends Controller
       $sync_user_password = Yii::$app->getModule('stepstone_sync')->settings->get('password');
       
       $selected_spaces = Yii::$app->getModule('stepstone_sync')->settings->get('selected-spaces');    
+      
+      $send_emails = Yii::$app->getModule('stepstone_sync')->settings->get('send-emails');          
                             
       $spaces = (new \yii\db\Query())
           ->select(['id', 'name'])
@@ -41,17 +43,21 @@ class AdminController extends Controller
         'sync_user_name' => $sync_user_name, 
         'sync_user_password' => $sync_user_password,
         'selected_spaces' => $selected_spaces,
+        'send_emails' => $send_emails,
         'spaces' => $spaces  
       ]);
     }
     
-    public function actionAjaxCredentials($sync_user_name, $sync_user_password, $selected_spaces) {
+    public function actionAjaxCredentials($sync_user_name, $sync_user_password, $selected_spaces, $send_emails) {
       
       Yii::$app->getModule('stepstone_sync')->settings->set('user', $sync_user_name);
       
       Yii::$app->getModule('stepstone_sync')->settings->set('password', $sync_user_password);
       
-      Yii::$app->getModule('stepstone_sync')->settings->set('selected-spaces', $selected_spaces);      
+      Yii::$app->getModule('stepstone_sync')->settings->set('selected-spaces', $selected_spaces);    
+      
+      Yii::$app->getModule('stepstone_sync')->settings->set('send-emails', $send_emails);    
+      
       
       echo "The credentials were saved.";
       

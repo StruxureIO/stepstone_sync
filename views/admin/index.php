@@ -2,6 +2,8 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 
+$email_checked = '';
+
 \humhub\modules\stepstone_sync\assets\Assets::register($this);
 ?>
 
@@ -20,6 +22,14 @@ use yii\helpers\Url;
           <label>Password: </label> <input type="password" id="sync-user-password" class="sync-access-input" value="<?php echo $sync_user_password ?>" >&nbsp;&nbsp;
           <a id="save-sync-credentials" class="btn-primary">Save</a>&nbsp;&nbsp;<span id="save-message"></span>
           <input type="hidden" id="selected-spaces" value="<?php echo $selected_spaces?>">
+        </p>
+        
+<!--        <p>
+          < ?php echo "send_emails " . $send_emails; ?>
+        </p>-->
+        
+        <p>
+          <label class="switch"><input id="send-emails" type="checkbox" ><span class="slider round"></span></label><span class="space-label">Send new user emails</span>                            
         </p>
         <p>Spaces:</p>
         <ul id="space-list">
@@ -84,6 +94,8 @@ $this->registerJs("
     var sync_user_password = $('#sync-user-password').val();
     var selected_spaces = $('#selected-spaces').val();
     console.log('sync_user_name',sync_user_name);
+    
+    var send_emails = $('#send-emails').prop('checked');
                   
     $.ajax({
       'type' : 'GET',
@@ -93,7 +105,8 @@ $this->registerJs("
         '$ csrf_param' : '$ csrf_token',
         'sync_user_name' : sync_user_name,
         'sync_user_password' : sync_user_password,
-        'selected_spaces' : selected_spaces
+        'selected_spaces' : selected_spaces,
+        'send_emails' : send_emails
       },
       'success' : function(data){
         $('#ajaxloader').hide();
