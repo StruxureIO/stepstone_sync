@@ -8,6 +8,8 @@ use humhub\modules\ui\menu\MenuLink;
 use humhub\widgets\TopMenu;
 use Yii;
 use yii\base\Event;
+use humhub\modules\stepstone_sync\jobs\SyncDaily;
+
 
 class Events
 {
@@ -53,4 +55,30 @@ class Events
             'isVisible' => Yii::$app->user->can(ManageModules::class)
         ]));
     }
+
+    // to run
+    // run the cron: php yii cron/run
+    // then run the queue: php yii queue/run
+    public static function onCronDailyRun($event)
+    {      
+      $auto_update = Yii::$app->getModule('stepstone_sync')->settings->get('auto-update');          
+      
+      if($auto_update == 'true') {
+        
+        $module = Yii::$app->getModule('stepstone_sync');
+        $lastRunAgentSyncCron = $module->settings->get('lastRunAgentSyncCron');
+
+        if(!$lastRunAgentSyncCron || time() >= ($lastRunAgentSyncCron + 86400)) { // 24 hours 86400
+          try {
+            Yii::$app->queue->push( new SyncDaily());
+          } catch (\Throwable $e) {
+            Yii::error($e);
+          }
+          $module->settings->set('lastRunAgentSyncCron', time());
+        }          
+        
+      }
+      
+    }
+    
 }
