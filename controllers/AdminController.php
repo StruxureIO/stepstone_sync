@@ -9,6 +9,7 @@ use humhub\modules\user\models\Password;
 use humhub\modules\user\models\Profile;
 use humhub\modules\space\models\Space;
 use humhub\modules\stepstone_sync\models\Import;
+use humhub\modules\stepstone_sync\helpers\SyncHelper;
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\db\Query;
@@ -30,10 +31,14 @@ class AdminController extends Controller
       
       $sync_user_password = Yii::$app->getModule('stepstone_sync')->settings->get('password');
       
-      $selected_spaces = Yii::$app->getModule('stepstone_sync')->settings->get('selected-spaces');    
+      $selected_spaces = Yii::$app->getModule('stepstone_sync')->settings->get('selected-spaces');   
       
+      $selected_spaces_names = Yii::$app->getModule('stepstone_sync')->settings->get('selected-spaces-names');    
+            
       $send_emails = Yii::$app->getModule('stepstone_sync')->settings->get('send-emails');          
-                            
+      
+      $auto_update = Yii::$app->getModule('stepstone_sync')->settings->get('auto-update');          
+                                  
       $spaces = (new \yii\db\Query())
           ->select(['id', 'name'])
           ->from('space')
@@ -43,12 +48,14 @@ class AdminController extends Controller
         'sync_user_name' => $sync_user_name, 
         'sync_user_password' => $sync_user_password,
         'selected_spaces' => $selected_spaces,
+        'selected_spaces_names' => $selected_spaces_names,  
         'send_emails' => $send_emails,
+        'auto_update' => $auto_update,
         'spaces' => $spaces  
       ]);
     }
     
-    public function actionAjaxCredentials($sync_user_name, $sync_user_password, $selected_spaces, $send_emails) {
+    public function actionAjaxCredentials($sync_user_name, $sync_user_password, $selected_spaces, $selected_spaces_names, $send_emails, $auto_update) {
       
       Yii::$app->getModule('stepstone_sync')->settings->set('user', $sync_user_name);
       
@@ -56,10 +63,13 @@ class AdminController extends Controller
       
       Yii::$app->getModule('stepstone_sync')->settings->set('selected-spaces', $selected_spaces);    
       
+      Yii::$app->getModule('stepstone_sync')->settings->set('selected-spaces-names', $selected_spaces_names);          
+      
       Yii::$app->getModule('stepstone_sync')->settings->set('send-emails', $send_emails);    
       
-      
-      echo "The credentials were saved.";
+      Yii::$app->getModule('stepstone_sync')->settings->set('auto-update', $auto_update);    
+            
+      echo "The settings were saved.";
       
       die();
       
@@ -105,7 +115,7 @@ class AdminController extends Controller
       die();
             
     }
-    
+            
     public function actionAjaxGetAgents($filter) {
       
       Yii::$app->db->createCommand()->truncateTable('import')->execute();      
@@ -141,7 +151,10 @@ class AdminController extends Controller
       
       $json_response = json_decode($response, true);
       //print_r($json_response['data']);
-
+      
+      //curl_close($curl);
+      //die();
+      
       foreach($json_response['data'] as $agent) {
         //$html .= "<p>". $agent['first_name'] ."</p>";        
         $import = new \humhub\modules\stepstone_sync\models\Import();
@@ -168,7 +181,7 @@ class AdminController extends Controller
           ->from('space')
           ->all();      
       
-      $new_password = $this->generate_password();
+      $new_password = SyncHelper::generate_password();
       
       $data = array();
       $data['username'] = 'testuser5';
@@ -219,16 +232,16 @@ class AdminController extends Controller
     }
     
     // https://stackoverflow.com/questions/6101956/generating-a-random-password-in-php
-    public function generate_password() {
-        $alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-        $pass = array(); 
-        $alphaLength = strlen($alphabet) - 1; //put the length -1 in cache
-        for ($i = 0; $i < 8; $i++) {
-            $n = random_int(0, $alphaLength);
-            $pass[] = $alphabet[$n];
-        }
-        return implode($pass); 
-    }    
+//    public function generate_password() {
+//        $alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+//        $pass = array(); 
+//        $alphaLength = strlen($alphabet) - 1; //put the length -1 in cache
+//        for ($i = 0; $i < 8; $i++) {
+//            $n = random_int(0, $alphaLength);
+//            $pass[] = $alphabet[$n];
+//        }
+//        return implode($pass); 
+//    }    
     
     public function actionAjaxImportCount() {
       
@@ -246,13 +259,16 @@ class AdminController extends Controller
     
     public function actionAjaxGetNextRecord($last_record, $import_count) {
       
-      $selected_spaces = Yii::$app->getModule('stepstone_sync')->settings->get('selected-spaces');   
+      //$selected_spaces = Yii::$app->getModule('stepstone_sync')->settings->get('selected-spaces');   
             
-      $spaces = (new \yii\db\Query())
-          ->select(['id', 'name'])
-          ->from('space')
-          ->all();      
-            
+      //$spaces = (new \yii\db\Query())
+      //    ->select(['id', 'name'])
+      //    ->from('space')
+      //    ->all();  
+      
+      $selected_spaces_names = Yii::$app->getModule('stepstone_sync')->settings->get('selected-spaces-names');    
+      $spaces_names = explode(';', $selected_spaces_names);            
+                  
       $message = '';
             
       $last_record = intval($last_record);
@@ -295,7 +311,7 @@ class AdminController extends Controller
           $profile->lastname = $agent['last_name'];
           $profile->phone_private = $agent['phone'];
 
-          $new_password = $this->generate_password();
+          $new_password = SyncHelper::generate_password();
           $userPassword = new Password();
           $userPassword->setPassword($new_password);
                                         
@@ -358,13 +374,9 @@ class AdminController extends Controller
                 ->setHtmlBody($html_text)
                 ->send();            
 
-            $selected_spaces = explode(',', $selected_spaces);      
-            foreach($spaces as $space) {     
-
-              if(in_array($space['id'], $selected_spaces)) {                
-                $mSpace = Space::findOne(['name' => $space['name']]);
-                $mSpace->addMember($user->id);
-              }  
+            foreach($spaces_names as $spaces_name) {  
+              $mSpace = Space::findOne(['name' => $spaces_name]);
+              $mSpace->addMember($user->id);
             }                          
           }
         } else {

@@ -2,7 +2,15 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 
-$email_checked = '';
+if($send_emails == 'true')
+  $email_checked = 'checked';
+else
+  $email_checked = '';
+
+if($auto_update == 'true')
+  $update_checked = 'checked';
+else
+  $update_checked = '';
 
 \humhub\modules\stepstone_sync\assets\Assets::register($this);
 ?>
@@ -20,16 +28,14 @@ $email_checked = '';
         <p>
           <label>User Name: </label> <input type="text" id="sync-user-name" class="sync-access-input" value="<?php echo $sync_user_name ?>" >&nbsp;&nbsp;
           <label>Password: </label> <input type="password" id="sync-user-password" class="sync-access-input" value="<?php echo $sync_user_password ?>" >&nbsp;&nbsp;
-          <a id="save-sync-credentials" class="btn-primary">Save</a>&nbsp;&nbsp;<span id="save-message"></span>
+          <a id="save-sync-credentials" class="btn-primary">Save Settings</a>&nbsp;&nbsp;<span id="save-message"></span>
           <input type="hidden" id="selected-spaces" value="<?php echo $selected_spaces?>">
+          <input type="hidden" id="selected-spaces-names" value="<?php echo $selected_spaces_names ?>">
         </p>
-        
-<!--        <p>
-          < ?php echo "send_emails " . $send_emails; ?>
-        </p>-->
-        
+                
         <p>
-          <label class="switch"><input id="send-emails" type="checkbox" ><span class="slider round"></span></label><span class="space-label">Send new user emails</span>                            
+          <label class="switch"><input id="send-emails" type="checkbox" <?php echo $email_checked ?> ><span class="slider round"></span></label><span class="space-label">Send new user emails</span>&nbsp;&nbsp;
+          <label class="switch"><input id="auto-update" type="checkbox" <?php echo $update_checked ?> ><span class="slider round"></span></label><span class="space-label">Auto Update</span>                            
         </p>
         <p>Spaces:</p>
         <ul id="space-list">
@@ -44,7 +50,7 @@ $email_checked = '';
                   else
                     $checked = '';      
                   
-                  echo '<li><label class="switch"><input class="user-space" type="checkbox" '.$checked.' data-id="'.$space['id'].'" ><span class="slider round"></span></label><span class="space-label">'.$space['name'].'</span></li>';                  
+                  echo '<li><label class="switch"><input class="user-space" type="checkbox" '.$checked.' data-id="'.$space['id'].'" data-name="'.$space['name'].'" ><span class="slider round"></span></label><span class="space-label">'.$space['name'].'</span></li>';                  
                 }
               ?>  
           
@@ -93,9 +99,14 @@ $this->registerJs("
     var sync_user_name = $('#sync-user-name').val();        
     var sync_user_password = $('#sync-user-password').val();
     var selected_spaces = $('#selected-spaces').val();
+    var selected_spaces_names = $('#selected-spaces-names').val();
     console.log('sync_user_name',sync_user_name);
     
     var send_emails = $('#send-emails').prop('checked');
+    
+    var auto_update = $('#auto-update').prop('checked');
+    
+    //console.log('send_emails',send_emails);
                   
     $.ajax({
       'type' : 'GET',
@@ -106,7 +117,9 @@ $this->registerJs("
         'sync_user_name' : sync_user_name,
         'sync_user_password' : sync_user_password,
         'selected_spaces' : selected_spaces,
-        'send_emails' : send_emails
+        'selected_spaces_names' : selected_spaces_names,
+        'send_emails' : send_emails,
+        'auto_update' : auto_update
       },
       'success' : function(data){
         $('#ajaxloader').hide();
@@ -160,18 +173,24 @@ $this->registerJs("
   
   $(document).on('click', '.user-space', function () {
     var selected_spaces = '';    
+    var selected_spaces_names = '';    
 
     $('.user-space').each(function() {   
       var space_id = $(this).attr('data-id');      
+      var space_name = $(this).attr('data-name');      
       var checked = $(this).is(':checked') 
       if(checked) {
-        if(selected_spaces == '') 
+        if(selected_spaces == '') {
           selected_spaces = space_id;
-        else
+          selected_spaces_names = space_name;
+        } else {
           selected_spaces += ',' + space_id;
+          selected_spaces_names += ';' + space_name;
+        }  
       }        
     });
     $('#selected-spaces').val(selected_spaces);              
+    $('#selected-spaces-names').val(selected_spaces_names);              
   });
 
 
@@ -198,6 +217,8 @@ $this->registerJs("
   
     console.log('process-agents');
     
+    var send_emails = $('#send-emails').prop('checked');
+    
     $('#ajaxloader').show();
     
     $.ajax({
@@ -210,7 +231,7 @@ $this->registerJs("
       'success' : function(data){      
         $('#sync-import-count').val(data);
         $('#process-message').html('record count: ' + data);  
-        run_import(0, parseInt(data));					
+        run_import(0, parseInt(data), send_emails);					
       }
     });  
 
@@ -235,7 +256,7 @@ $this->registerJs("
     });  
   }
   
-function run_import(last_record, import_count){
+function run_import(last_record, import_count, send_emails){
   
   $.ajax({
     'type' : 'GET',
@@ -244,13 +265,14 @@ function run_import(last_record, import_count){
     'data' : {
       '$csrf_param' : '$csrf_token',
       'last_record': last_record, 
-      'import_count': import_count
+      'import_count': import_count,
+      'send_emails' : send_emails
     },
     'success' : function(data){     
       console.log('data: ', data);
       if(data != null && data.last_record != null) {
         jQuery('#process-message').html(data.message);
-        run_import(parseInt(data.last_record), import_count);
+        run_import(parseInt(data.last_record), import_count, send_emails);
       } else {
         jQuery('#process-message').html(data.message);
         $('#ajaxloader').hide();
