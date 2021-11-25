@@ -347,10 +347,10 @@ class AdminController extends Controller
             $userPassword->user_id = $user->id;
             $userPassword->save();
             
-            $plain_text = "Welcome. This is invitation to log into the theblacksheephub.com\n You user name is " . $agent['email'] . " and your password is $new_password.\n To log in, visit https://dev.theblacksheephub.com/index.php?r=user%2Fauth%2Flogin."; 
+            $plain_text = "Welcome. This is invitation to log into the theblacksheephub.com\n You user name is " . $agent['email'] . " and your password is $new_password.\n To log in, visit https://theblacksheephub.com/user/auth/login."; 
             
             // for production, change to the proper web site URL
-            $html_text = "<p>Welcome. This is invitation to log into the <strong>theblacksheephub.com</strong></p><p>You user name is " . $agent['email'] . "</p><p>and your password is $new_password.</p><p>To log in, visit <a href='https://theblacksheephub.com/index.php?r=user%2Fauth%2Flogin'>theblacksheephub.com</a>.</p>"; 
+            $html_text = "<p>Welcome. This is invitation to log into the <strong>theblacksheephub.com</strong></p><p>You user name is " . $agent['email'] . "</p><p>and your password is $new_password.</p><p>To log in, visit <a href='https://theblacksheephub.com/user/auth/login'>theblacksheephub.com</a>.</p>"; 
             
             // uncomment for production 
             if($send_emails == 'true') {
