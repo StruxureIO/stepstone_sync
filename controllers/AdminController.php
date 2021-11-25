@@ -230,19 +230,7 @@ class AdminController extends Controller
       die();
         
     }
-    
-    // https://stackoverflow.com/questions/6101956/generating-a-random-password-in-php
-//    public function generate_password() {
-//        $alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-//        $pass = array(); 
-//        $alphaLength = strlen($alphabet) - 1; //put the length -1 in cache
-//        for ($i = 0; $i < 8; $i++) {
-//            $n = random_int(0, $alphaLength);
-//            $pass[] = $alphabet[$n];
-//        }
-//        return implode($pass); 
-//    }    
-    
+        
     public function actionAjaxImportCount() {
       
       $connection = Yii::$app->getDb();
@@ -262,6 +250,8 @@ class AdminController extends Controller
       // get selected spaces to add new users
       $selected_spaces_names = Yii::$app->getModule('stepstone_sync')->settings->get('selected-spaces-names');    
       $spaces_names = explode(';', $selected_spaces_names);            
+      
+      $send_emails = Yii::$app->getModule('stepstone_sync')->settings->get('send-emails');          
                   
       $message = '';
             
@@ -357,19 +347,21 @@ class AdminController extends Controller
             $userPassword->user_id = $user->id;
             $userPassword->save();
             
-            $plain_text = "Welcome. This is invitation to log into the theblacksheephub.com\n You user name is " . $agent['email'] . " and your password is $new_password.\n To log in, visit https://dev.theblacksheephub.com/index.php?r=user%2Fauth%2Flogin."; 
+            $plain_text = "Welcome. This is invitation to log into the theblacksheephub.com\n You user name is " . $agent['email'] . " and your password is $new_password.\n To log in, visit https://theblacksheephub.com/user/auth/login."; 
             
             // for production, change to the proper web site URL
-            $html_text = "<p>Welcome. This is invitation to log into the <strong>theblacksheephub.com</strong></p><p>You user name is " . $agent['email'] . "</p><p>and your password is $new_password.</p><p>To log in, visit <a href='https://theblacksheephub.com/index.php?r=user%2Fauth%2Flogin'>theblacksheephub.com</a>.</p>"; 
+            $html_text = "<p>Welcome. This is invitation to log into the <strong>theblacksheephub.com</strong></p><p>You user name is " . $agent['email'] . "</p><p>and your password is $new_password.</p><p>To log in, visit <a href='https://theblacksheephub.com/user/auth/login'>theblacksheephub.com</a>.</p>"; 
             
             // uncomment for production 
-            Yii::$app->mailer->compose()
-                ->setFrom('admin@theblacksheephub.com')
-                ->setTo($agent['email'])
-                ->setSubject('Welcome to theblacksheephub.com')
-                ->setTextBody($plain_text)
-                ->setHtmlBody($html_text)
-                ->send();            
+            if($send_emails == 'true') {
+              Yii::$app->mailer->compose()
+                  ->setFrom('admin@theblacksheephub.com')
+                  ->setTo($agent['email'])
+                  ->setSubject('Welcome to theblacksheephub.com')
+                  ->setTextBody($plain_text)
+                  ->setHtmlBody($html_text)
+                  ->send();  
+            }
 
             foreach($spaces_names as $spaces_name) {  
               $mSpace = Space::findOne(['name' => $spaces_name]);
