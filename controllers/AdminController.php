@@ -259,13 +259,7 @@ class AdminController extends Controller
     
     public function actionAjaxGetNextRecord($last_record, $import_count) {
       
-      //$selected_spaces = Yii::$app->getModule('stepstone_sync')->settings->get('selected-spaces');   
-            
-      //$spaces = (new \yii\db\Query())
-      //    ->select(['id', 'name'])
-      //    ->from('space')
-      //    ->all();  
-      
+      // get selected spaces to add new users
       $selected_spaces_names = Yii::$app->getModule('stepstone_sync')->settings->get('selected-spaces-names');    
       $spaces_names = explode(';', $selected_spaces_names);            
                   
@@ -334,6 +328,8 @@ class AdminController extends Controller
             $profile->broker = $agent['is_broker'];
             $profile->partner = $agent['is_partner'];
                         
+            // availale fields with no corresponding data
+            
             //$profile->sponsorship_date = $agent[''];
             //$profile->market_other_selection = $agent[''];
             //$profile->license_date = $agent[''];
@@ -367,13 +363,13 @@ class AdminController extends Controller
             $html_text = "<p>Welcome. This is invitation to log into the <strong>theblacksheephub.com</strong></p><p>You user name is " . $agent['email'] . "</p><p>and your password is $new_password.</p><p>To log in, visit <a href='https://theblacksheephub.com/index.php?r=user%2Fauth%2Flogin'>theblacksheephub.com</a>.</p>"; 
             
             // uncomment for production 
-//            Yii::$app->mailer->compose()
-//                ->setFrom('admin@theblacksheephub.com')
-//                ->setTo($agent['email'])
-//                ->setSubject('Welcome to theblacksheephub.com')
-//                ->setTextBody($plain_text)
-//                ->setHtmlBody($html_text)
-//                ->send();            
+            Yii::$app->mailer->compose()
+                ->setFrom('admin@theblacksheephub.com')
+                ->setTo($agent['email'])
+                ->setSubject('Welcome to theblacksheephub.com')
+                ->setTextBody($plain_text)
+                ->setHtmlBody($html_text)
+                ->send();            
 
             foreach($spaces_names as $spaces_name) {  
               $mSpace = Space::findOne(['name' => $spaces_name]);
@@ -394,6 +390,8 @@ class AdminController extends Controller
             $profile->commerical_supervisor_status = $agent['commercial_supervisor_status'];
             $profile->broker = $agent['is_broker'];
             $profile->partner = $agent['is_partner'];
+            
+            // availale fields with no corresponding data            
                         
             //$profile->sponsorship_date = $agent[''];
             //$profile->market_other_selection = $agent[''];
@@ -438,193 +436,6 @@ class AdminController extends Controller
       
       die();
             
-    }
-    
-        
-    public function actionAjaxGetNextRecord1($last_record, $import_count) {
-            
-      $selected_spaces = Yii::$app->getModule('stepstone_sync')->settings->get('selected-spaces');   
-            
-      $spaces = (new \yii\db\Query())
-          ->select(['id', 'name'])
-          ->from('space')
-          ->all();      
-            
-      $message = '';
-      
-      $last_record = intval($last_record);
-      
-      $import_count = intval($import_count);
-      
-      if($import_count != 0)
-		    $percentage = ceil((($last_record+1) / $import_count) * 100);
-      else
-        $percentage = 0;
-      
-      $connection = Yii::$app->getDb();      
-              
-      $command = $connection->createCommand("select * from import order by id limit $last_record, 1");
-      
-      $row = $command->queryAll();   
-      									
-			if($row) {		
-                        
-
-        //$agent = json_decode(json_decode($row[0]['data']),  true);
-        $agent = json_decode($row[0]['data'],  true);        
-        print_r($agent);
-                
-        $user = User::findOne(['email' => $agent['email']]);
-        
-        if($user == null ) {
-          // new user
-          $message = 'Adding user ' . $agent['first_name'] . " " . $agent['email'];
-          
-          $user = new User();
-          $user->scenario = 'registration';
-
-          $profile = $user->profile;
-          $profile->scenario = 'registration';
-
-          $user->username = $agent['email'];
-          $user->email = $agent['email'];
-
-          $user->status = User::STATUS_ENABLED;
-
-          $profile->firstname = $agent['first_name'];
-          $profile->lastname = $agent['last_name'];
-          $profile->phone_private = $agent['phone'];
-
-          $new_password = $this->generate_password();
-          $userPassword = new Password();
-          $userPassword->setPassword($new_password);
-                                        
-          if($user->save()) { 
-            
-            $newGroupUser = new GroupUser();
-            $newGroupUser->user_id = $user->id;
-            $newGroupUser->group_id = 2;
-            $newGroupUser->created_at = date('Y-m-d G:i:s');
-            $newGroupUser->created_by = Yii::$app->user->id;
-            $newGroupUser->is_group_manager = false;
-            $newGroupUser->save();
-            
-            $profile->user_id = $user->id;
-            
-            $profile->market = $agent['market'];
-            $profile->captain_status = $agent['captain_status'];
-            $profile->supervising_broker_status = $agent['supervising_broker_status'];
-            $profile->commerical_supervisor_status = $agent['commercial_supervisor_status'];
-            $profile->broker = $agent['is_broker'];
-            $profile->partner = $agent['is_partner'];
-                        
-            //$profile->sponsorship_date = $agent[''];
-            //$profile->market_other_selection = $agent[''];
-            //$profile->license_date = $agent[''];
-            //$profile->listing_property_experience = $agent[''];
-            //$profile->working_with_buyers_experience = $agent[''];
-            //$profile->experience_with_investing = $agent[''];
-            //$profile->investment_deals_other_selection = $agent[''];
-            //$profile->investment_deals = $agent[''];
-            //$profile->funds_available = $agent[''];
-            //$profile->language_spoken_other_selection = $agent[''];
-            //$profile->language_spoken = $agent[''];
-            //$profile->list_property_for_seller = $agent[''];
-            //$profile->pay_referral_fees = $agent[''];
-            //$profile->work_with_buyers = $agent[''];
-            //$profile->wholesaler = $agent[''];
-            //$profile->deals_from_wholesalers = $agent[''];
-            //$profile->mentor_listing_property = $agent[''];
-            //$profile->mentor_working_buyers = $agent[''];
-            //$profile->mentor_investing = $agent[''];
-            //$profile->lending = $agent[''];
-            //$profile->broker2 = $agent[''];                                   
-            
-            $profile->save();
-
-            $userPassword->user_id = $user->id;
-            $userPassword->save();
-            
-            $plain_text = "Welcome. This is invitation to log into the theblacksheephub.com\n You user name is " . $agent['email'] . " and your password is $new_password.\n To log in, visit https://dev.theblacksheephub.com/index.php?r=user%2Fauth%2Flogin."; 
-            
-            $html_text = "<p>Welcome. This is invitation to log into the <strong>theblacksheephub.com</strong></p><p>You user name is " . $agent['email'] . "</p><p>and your password is $new_password.</p><p>To log in, visit <a href='https://dev.theblacksheephub.com/index.php?r=user%2Fauth%2Flogin'>dev.theblacksheephub.com</a>.</p>"; 
-            
-            Yii::$app->mailer->compose()
-                ->setFrom('admin@theblacksheephub.com')
-                ->setTo('apasho@gmail.com')
-                //->setTo($agent['e mail'])
-                ->setSubject('Welcome to theblacksheephub.com')
-                ->setTextBody($plain_text)
-                ->setHtmlBody($html_text)
-                ->send();            
-
-            $selected_spaces = explode(',', $selected_spaces);      
-            foreach($spaces as $space) {     
-
-              if(in_array($space['id'], $selected_spaces)) {                
-                $mSpace = Space::findOne(['name' => $space['name']]);
-                $mSpace->addMember($user->id);
-              }  
-            }                          
-          }
-        } else {
-          // existing user
-          $message = 'updating user ' . $agent['first_name'] . " " . $agent['email'];
-                    
-          $profile = Profile::findOne(['user_id' => $user->id]);
-          
-          if($profile != null) {
-            
-            $profile->market = $agent['market'];
-            $profile->captain_status = $agent['captain_status'];
-            $profile->supervising_broker_status = $agent['supervising_broker_status'];
-            $profile->commerical_supervisor_status = $agent['commercial_supervisor_status'];
-            $profile->broker = $agent['is_broker'];
-            $profile->partner = $agent['is_partner'];
-                        
-            //$profile->sponsorship_date = $agent[''];
-            //$profile->market_other_selection = $agent[''];
-            //$profile->license_date = $agent[''];
-            //$profile->listing_property_experience = $agent[''];
-            //$profile->working_with_buyers_experience = $agent[''];
-            //$profile->experience_with_investing = $agent[''];
-            //$profile->investment_deals_other_selection = $agent[''];
-            //$profile->investment_deals = $agent[''];
-            //$profile->funds_available = $agent[''];
-            //$profile->language_spoken_other_selection = $agent[''];
-            //$profile->language_spoken = $agent[''];
-            //$profile->list_property_for_seller = $agent[''];
-            //$profile->pay_referral_fees = $agent[''];
-            //$profile->work_with_buyers = $agent[''];
-            //$profile->wholesaler = $agent[''];
-            //$profile->deals_from_wholesalers = $agent[''];
-            //$profile->mentor_listing_property = $agent[''];
-            //$profile->mentor_working_buyers = $agent[''];
-            //$profile->mentor_investing = $agent[''];
-            //$profile->lending = $agent[''];
-            //$profile->broker2 = $agent[''];                                   
-            
-            $profile->save();
-            
-          }
-                    
-        }
-        
-        //$message = "Importing ". $agent['first_name'] . " " . $agent['last_name'] . " {$percentage}%";    
-
-				$last_record++;
-        
-        if($last_record > 3)
-				  $data = array('message' => 'Import complete.', 'last_record' => null, 'percentage' => 100 );								
-				else
-				  $data = array('message' => $message, 'last_record' => $last_record, 'percentage' => $percentage );				
-			} else {
-				$data = array('message' => 'Import complete.', 'last_record' => null, 'percentage' => 100 );								
-			}		
-      
-      echo json_encode($data);
-      die();
-      
     }
     
 
