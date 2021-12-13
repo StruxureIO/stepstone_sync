@@ -34,14 +34,23 @@ Currently, the data from api.stepstoneadmin.com that is stored on theblacksheeph
 includes 
  
 Agent's email 
+
 First name 
+
 Last name 
+
 Phone number 
+
 Market 
+
 Captain status 
+
 Supervising broker status 
+
 Commercial supervisor status 
+
 Is broker 
+
 Is partner 
  
 The invitation email that is sent to new users is as follows: 
