@@ -355,7 +355,7 @@ class AdminController extends Controller
             // uncomment for production 
             if($send_emails == 'true') {
               Yii::$app->mailer->compose()
-                  ->setFrom('admin@theblacksheephub.com')
+                  ->setFrom('noreply@theblacksheephub.com')
                   ->setTo($agent['email'])
                   ->setSubject('Welcome to theblacksheephub.com')
                   ->setTextBody($plain_text)
